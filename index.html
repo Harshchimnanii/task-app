@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Countdown</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        .floating-shapes {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .shape {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .shape:nth-child(1) {
+            width: 60px;
+            height: 60px;
+            top: 20%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .shape:nth-child(2) {
+            width: 80px;
+            height: 80px;
+            top: 60%;
+            right: 10%;
+            animation-delay: 2s;
+        }
+
+        .shape:nth-child(3) {
+            width: 40px;
+            height: 40px;
+            bottom: 20%;
+            left: 20%;
+            animation-delay: 4s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+            position: relative;
+            z-index: 2;
+            transform: translateY(0);
+            transition: all 0.5s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        .input-page {
+            text-align: center;
+            opacity: 1;
+            transform: translateX(0);
+            transition: all 0.5s ease;
+        }
+
+        .input-page.slide-out {
+            opacity: 0;
+            transform: translateX(-100%);
+        }
+
+        .countdown-page {
+            text-align: center;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.5s ease;
+            position: absolute;
+            top: 40px;
+            left: 40px;
+            right: 40px;
+        }
+
+        .countdown-page.slide-in {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        h1 {
+            color: #4a5568;
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #4a5568;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .time-inputs {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .start-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .start-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .task-title {
+            color: #4a5568;
+            font-size: 2rem;
+            margin-bottom: 30px;
+            font-weight: 700;
+            line-height: 1.2;
+            word-wrap: break-word;
+        }
+
+        .countdown-display {
+            font-size: 4rem;
+            font-weight: 800;
+            color: #667eea;
+            margin: 40px 0;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+        }
+
+        .countdown-labels {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+            color: #718096;
+            font-weight: 600;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(102, 126, 234, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 30px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 10px;
+            transition: width 1s ease;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .control-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .history-btn {
+            background: #4299e1;
+            color: white;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        .history-btn:hover {
+            background: #3182ce;
+            transform: translateY(-2px);
+        }
+
+        .history-page {
+            text-align: left;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.5s ease;
+            position: absolute;
+            top: 40px;
+            left: 40px;
+            right: 40px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .history-page.slide-in {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .history-item {
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+        }
+
+        .history-item:hover {
+            background: rgba(102, 126, 234, 0.15);
+            transform: translateX(5px);
+        }
+
+        .history-task-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 8px;
+        }
+
+        .history-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            color: #718096;
+        }
+
+        .history-duration {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .history-status {
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-completed {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status-paused {
+            background: #fed7c3;
+            color: #c05621;
+        }
+
+        .status-reset {
+            background: #fed7d7;
+            color: #c53030;
+        }
+
+        .no-history {
+            text-align: center;
+            color: #718096;
+            font-style: italic;
+            padding: 40px 20px;
+        }
+
+        .back-btn {
+            background: #718096;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .back-btn:hover {
+            background: #4a5568;
+            transform: translateY(-2px);
+        }
+
+        .clear-history-btn {
+            background: #f56565;
+            color: white;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .clear-history-btn:hover {
+            background: #e53e3e;
+            transform: translateY(-2px);
+        }
+
+        .reset-btn {
+            background: #f56565;
+            color: white;
+        }
+
+        .reset-btn:hover {
+            background: #e53e3e;
+            transform: translateY(-2px);
+        }
+
+        .pause-btn {
+            background: #ed8936;
+            color: white;
+        }
+
+        .pause-btn:hover {
+            background: #dd6b20;
+            transform: translateY(-2px);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #48bb78;
+            margin-right: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .finished {
+            color: #f56565 !important;
+            animation: bounce 1s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .card {
+                padding: 25px;
+                margin: 10px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .countdown-display {
+                font-size: 2.5rem;
+            }
+
+            .time-inputs {
+                grid-template-columns: 1fr;
+            }
+
+            .task-title {
+                font-size: 1.5rem;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 10px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .countdown-display {
+                font-size: 2rem;
+            }
+
+            .countdown-labels {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-shapes">
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <div class="input-page" id="inputPage">
+                <h1>Task Timer</h1>
+                <div class="form-group">
+                    <label for="taskName">Task Name</label>
+                    <input type="text" id="taskName" placeholder="Enter your task..." required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Set Timer</label>
+                    <div class="time-inputs">
+                        <div>
+                            <label for="hours">Hours</label>
+                            <input type="number" id="hours" min="0" max="23" value="0">
+                        </div>
+                        <div>
+                            <label for="minutes">Minutes</label>
+                            <input type="number" id="minutes" min="0" max="59" value="25">
+                        </div>
+                        <div>
+                            <label for="seconds">Seconds</label>
+                            <input type="number" id="seconds" min="0" max="59" value="0">
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="start-btn" onclick="startTimer()">Start Timer</button>
+                <button class="control-btn history-btn" onclick="showHistory()">View History</button>
+            </div>
+
+            <div class="countdown-page" id="countdownPage">
+                <div class="status-indicator"></div>
+                <div class="task-title" id="displayTaskName"></div>
+                <div class="countdown-display" id="countdownDisplay">25:00</div>
+                <div class="countdown-labels">
+                    <span>Minutes</span>
+                    <span>Seconds</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="controls">
+                    <button class="control-btn pause-btn" onclick="togglePause()" id="pauseBtn">Pause</button>
+                    <button class="control-btn reset-btn" onclick="resetTimer()">Reset</button>
+                </div>
+            </div>
+
+            <div class="history-page" id="historyPage">
+                <button class="control-btn back-btn" onclick="backToInput()">← Back to Timer</button>
+                <h2 style="color: #4a5568; margin-bottom: 20px;">Task History</h2>
+                <div id="historyList"></div>
+                <button class="control-btn clear-history-btn" onclick="clearHistory()">Clear All History</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let timer;
+        let isPaused = false;
+        let totalSeconds = 0;
+        let remainingSeconds = 0;
+        let originalSeconds = 0;
+        let currentTask = null;
+        let startTime = null;
+
+        // Database functions
+        function saveTaskToDatabase(taskData) {
+            let tasks = JSON.parse(localStorage.getItem('taskHistory') || '[]');
+            tasks.unshift(taskData); // Add to beginning of array
+            localStorage.setItem('taskHistory', JSON.stringify(tasks));
+        }
+
+        function getTaskHistory() {
+            return JSON.parse(localStorage.getItem('taskHistory') || '[]');
+        }
+
+        function clearTaskHistory() {
+            localStorage.removeItem('taskHistory');
+        }
+
+        function formatDateTime(date) {
+            const now = new Date();
+            const taskDate = new Date(date);
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+            const taskDay = new Date(taskDate.getFullYear(), taskDate.getMonth(), taskDate.getDate());
+
+            let dateStr = '';
+            if (taskDay.getTime() === today.getTime()) {
+                dateStr = 'Today';
+            } else if (taskDay.getTime() === yesterday.getTime()) {
+                dateStr = 'Yesterday';
+            } else {
+                dateStr = taskDate.toLocaleDateString();
+            }
+
+            const timeStr = taskDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            return `${dateStr} at ${timeStr}`;
+        }
+
+        function formatDuration(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+
+            if (hours > 0) {
+                return `${hours}h ${minutes}m ${secs}s`;
+            } else if (minutes > 0) {
+                return `${minutes}m ${secs}s`;
+            } else {
+                return `${secs}s`;
+            }
+        }
+
+        function startTimer() {
+            const taskName = document.getElementById('taskName').value;
+            const hours = parseInt(document.getElementById('hours').value) || 0;
+            const minutes = parseInt(document.getElementById('minutes').value) || 0;
+            const seconds = parseInt(document.getElementById('seconds').value) || 0;
+
+            if (!taskName.trim()) {
+                alert('Please enter a task name');
+                return;
+            }
+
+            if (hours === 0 && minutes === 0 && seconds === 0) {
+                alert('Please set a valid time');
+                return;
+            }
+
+            totalSeconds = hours * 3600 + minutes * 60 + seconds;
+            originalSeconds = totalSeconds;
+            remainingSeconds = totalSeconds;
+            startTime = new Date();
+
+            // Create current task object
+            currentTask = {
+                name: taskName,
+                duration: originalSeconds,
+                startTime: startTime,
+                status: 'running'
+            };
+
+            document.getElementById('displayTaskName').textContent = taskName;
+            
+            // Animate page transition
+            document.getElementById('inputPage').classList.add('slide-out');
+            setTimeout(() => {
+                document.getElementById('countdownPage').classList.add('slide-in');
+            }, 250);
+
+            runTimer();
+        }
+
+        function runTimer() {
+            timer = setInterval(() => {
+                if (!isPaused && remainingSeconds > 0) {
+                    remainingSeconds--;
+                    updateDisplay();
+                    updateProgress();
+                } else if (remainingSeconds === 0) {
+                    finishTimer();
+                }
+            }, 1000);
+        }
+
+        function updateDisplay() {
+            const hours = Math.floor(remainingSeconds / 3600);
+            const minutes = Math.floor((remainingSeconds % 3600) / 60);
+            const seconds = remainingSeconds % 60;
+
+            let display = '';
+            if (hours > 0) {
+                display = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            } else {
+                display = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+
+            document.getElementById('countdownDisplay').textContent = display;
+        }
+
+        function updateProgress() {
+            const progress = ((originalSeconds - remainingSeconds) / originalSeconds) * 100;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            const pauseBtn = document.getElementById('pauseBtn');
+            pauseBtn.textContent = isPaused ? 'Resume' : 'Pause';
+            
+            const statusIndicator = document.querySelector('.status-indicator');
+            statusIndicator.style.animationPlayState = isPaused ? 'paused' : 'running';
+        }
+
+        function resetTimer() {
+            clearInterval(timer);
+            isPaused = false;
+            
+            // Save to database if task was started
+            if (currentTask) {
+                const completedTime = originalSeconds - remainingSeconds;
+                const taskData = {
+                    ...currentTask,
+                    endTime: new Date(),
+                    completedTime: completedTime,
+                    status: 'reset'
+                };
+                saveTaskToDatabase(taskData);
+                currentTask = null;
+            }
+            
+            // Reset form
+            document.getElementById('taskName').value = '';
+            document.getElementById('hours').value = '0';
+            document.getElementById('minutes').value = '25';
+            document.getElementById('seconds').value = '0';
+            
+            // Reset display
+            document.getElementById('countdownDisplay').classList.remove('finished');
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('pauseBtn').textContent = 'Pause';
+            
+            // Animate back to input page
+            document.getElementById('countdownPage').classList.remove('slide-in');
+            setTimeout(() => {
+                document.getElementById('inputPage').classList.remove('slide-out');
+            }, 250);
+        }
+
+        function finishTimer() {
+            clearInterval(timer);
+            document.getElementById('countdownDisplay').textContent = '00:00';
+            document.getElementById('countdownDisplay').classList.add('finished');
+            document.getElementById('progressFill').style.width = '100%';
+            
+            // Save completed task to database
+            if (currentTask) {
+                const taskData = {
+                    ...currentTask,
+                    endTime: new Date(),
+                    completedTime: originalSeconds,
+                    status: 'completed'
+                };
+                saveTaskToDatabase(taskData);
+                currentTask = null;
+            }
+            
+            // Play notification sound (if supported)
+            if ('Notification' in window) {
+                new Notification('Task Complete!', {
+                    body: 'Your timer has finished.',
+                    icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyUzYuNDggMjIgMTIgMjJTMjIgMTcuNTIgMjIgMTJTMTcuNTIgMiAxMiAyWk0xMCAxN0w1IDEyTDYuNDEgMTAuNTlMMTAgMTRMMTcuNTkgNi40MUwxOSA4TDEwIDE3WiIgZmlsbD0iIzQ4QkI3OCIvPgo8L3N2Zz4K'
+                });
+            }
+        }
+
+        function showHistory() {
+            const historyList = document.getElementById('historyList');
+            const tasks = getTaskHistory();
+            
+            if (tasks.length === 0) {
+                historyList.innerHTML = '<div class="no-history">No tasks completed yet. Start your first timer!</div>';
+            } else {
+                historyList.innerHTML = tasks.map(task => `
+                    <div class="history-item">
+                        <div class="history-task-name">${task.name}</div>
+                        <div class="history-details">
+                            <div>
+                                <div style="margin-bottom: 4px;">${formatDateTime(task.startTime)}</div>
+                                <div class="history-duration">Duration: ${formatDuration(task.completedTime)} / ${formatDuration(task.duration)}</div>
+                            </div>
+                            <div class="history-status status-${task.status}">
+                                ${task.status.charAt(0).toUpperCase() + task.status.slice(1)}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            // Animate to history page
+            document.getElementById('inputPage').classList.add('slide-out');
+            setTimeout(() => {
+                document.getElementById('historyPage').classList.add('slide-in');
+            }, 250);
+        }
+
+        function backToInput() {
+            document.getElementById('historyPage').classList.remove('slide-in');
+            setTimeout(() => {
+                document.getElementById('inputPage').classList.remove('slide-out');
+            }, 250);
+        }
+
+        function clearHistory() {
+            if (confirm('Are you sure you want to clear all task history?')) {
+                clearTaskHistory();
+                showHistory(); // Refresh the history view
+            }
+        }
+
+        // Request notification permission
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+
+        // Initialize display
+        updateDisplay();
+    </script>
+</body>
+</html>
